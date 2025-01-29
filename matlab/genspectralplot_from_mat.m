@@ -1,9 +1,45 @@
-% Edits by (tc): Adjustments to the plots based on personal preference.
-% For combined S and L data (i.e., ~0.4 to 2.5 microns), the plots are
-% divided for better clarity. However, the bands are currently hard coded.
-function [R2, rmse, lt, wt, wmi, wifi, f] = genspectralplot(ab, d, ind, all_ab, all_d, all_ind, R_vs_SSA, D)
+% Utility function to construct MCMC spectral plots from the outputted
+% .mat files. The code is based on genspectralplot.m.
+function [R2, rmse, lt, wt, wmi, wifi, f] = genspectralplot_from_mat(ab, d, ind, all_ab, all_d, all_ind, R_vs_SSA, D)
 
-set(0, 'defaultAxesFontSize', 18)
+[filename, pathname, ~] = uigetfile({'*.mat', 'MAT-files'}, 'Select a .mat file');
+if filename == 0
+    disp('Missing .mat file.');
+    return;
+end
+load(fullfile(pathname, filename));
+
+MAP_grain_sizes_in_microns = bestmod(1:length(bestmod)/3);
+MAP_abundances_in_percent = bestmod(length(bestmod)/3+1:length(bestmod)/3*2);
+MAP_endmembers_indices = bestmod(length(bestmod)/3*2+1:end);
+MAP_endmembers_labels = strings(length(bestmod)/3, 1);
+
+MAP_grain_sizes_in_microns = MAP_grain_sizes_in_microns(MAP_grain_sizes_in_microns ~= 0)
+MAP_abundances_in_percent = MAP_abundances_in_percent(MAP_abundances_in_percent ~= 0)
+MAP_endmembers_indices = MAP_endmembers_indices(MAP_endmembers_indices ~= 0)
+MAP_endmembers_labels = strings(length(MAP_endmembers_indices), 1);
+
+for i = 1:length(MAP_endmembers_indices)
+    index = MAP_endmembers_indices(i);
+    if index > 0
+        MAP_endmembers_labels(i) = D.labels(1, index);
+    end
+end
+MAP_endmembers = strcat(string(MAP_endmembers_indices), ' (', MAP_endmembers_labels, ')')
+
+ab = MAP_abundances_in_percent;
+d = MAP_grain_sizes_in_microns;
+ind = MAP_endmembers_indices;
+R_vs_SSA = D.R_vs_SSA;
+
+% Plot the MAP model, as well as all other models.
+unique_mods = unique(MODS.', 'rows').';
+[unique_mods_rows, ~] = size(unique_mods);
+all_ab = unique_mods(unique_mods_rows/3+1:unique_mods_rows/3*2,:);
+all_d = unique_mods(1:unique_mods_rows/3,:);
+all_ind = unique_mods(unique_mods_rows/3*2+1:end,:);
+
+set(0, 'defaultAxesFontSize', 12)
 set(0, 'defaultTextFontSize', 18)
 set(0, 'defaultfigurecolor', [1 1 1])
 
@@ -77,12 +113,12 @@ end
 % end
 % p3 = plot(lt.*1e6, wc, 'b', 'LineWidth', 2); % Plot checkerboard spectrum at mixed spectrum resolution.
 %plot(lm.*1e6, wm, 'k', 'LineWidth', 2) % Plot model spectrum at n and k resolution.
-legend([p1 p2], sprintf('data R^2 = %.4f', R2), sprintf('model RMSE = %.4f', rmse), 'Location', 'NorthOutside')
-xlabel('Wavelength, \lambda (\mum)')
+%legend([p1 p2], sprintf('data R^2 = %.4f', R2), sprintf('model RMSE = %.4f', rmse), 'Location', 'southeast')
+%xlabel('Wavelength, \lambda (\mum)')
 if R_vs_SSA
     ylabel('Reflectance')
 else
-    ylabel('Single Scattering Albedo')
+    ylabel('Single-scattering albedo')
 end
 if ~(round(max(lt)*1e6) == 1 || round(min(lt)*1e6) == 1) % If whole spectrum (from 0.4 to 2.5 microns)
     xlim([min(lt(1:79).*1e6) max(lt(1:79).*1e6)])
@@ -98,7 +134,10 @@ set(gcf, 'color', 'w');
 if round(max(lt)*1e6) == 1 || round(min(lt)*1e6) == 1 % If S data or L data only
     subplot(2, 2, 3, 'align')
 else
-    subplot(2, 3, 4, 'align')
+    h_res = subplot(2, 3, 4, 'align');
+    pos = get(h_res, 'Position');
+    pos(2) = 0.3; % Reduce the spacing between the top and bottom plots.
+    set(h_res, 'Position', pos);
 end
 if ~(round(max(lt)*1e6) == 1 || round(min(lt)*1e6) == 1) % If whole spectrum (from 0.4 to 2.5 microns)
     plot(lt(1:79).*1e6,(wt(1:79)./wmi(1:79)-1).*100, 'r', 'LineWidth', 2)
@@ -122,6 +161,7 @@ else
         ylim([-5 5])
     end
 end
+pbaspect([1 0.25 1]); % Make the y-axis shorter.
 %xlim([min([min(lm.*1e6) min(lt.*1e6)]) max([max(lm.*1e6) max(lt.*1e6)])])
 
 if ~(round(max(lt)*1e6) == 1 || round(min(lt)*1e6) == 1) % If whole spectrum (from 0.4 to 2.5 microns)
@@ -155,12 +195,13 @@ if ~(round(max(lt)*1e6) == 1 || round(min(lt)*1e6) == 1) % If whole spectrum (fr
     % end
     % p3 = plot(lt.*1e6, wc, 'b', 'LineWidth', 2); % Plot checkerboard spectrum at mixed spectrum resolution.
     %plot(lm.*1e6, wm, 'k', 'LineWidth', 2) % Plot model spectrum at n and k resolution.
-    legend([p1 p2], sprintf('data R^2 = %.4f', R2), sprintf('model RMSE = %.4f', rmse), 'Location', 'NorthOutside')
-    xlabel('Wavelength, \lambda (\mum)')
+    leg = legend([p1 p2], 'data', 'model', 'Location', 'southeast');
+    title(leg, sprintf('RMSE = %.4f', rmse));
+    %xlabel('Wavelength, \lambda (\mum)')
     if R_vs_SSA
         ylabel('Reflectance')
     else
-        ylabel('Single Scattering Albedo')
+        %ylabel('Single-scattering albedo')
     end
     xlim([min(lt(79:end).*1e6) max(lt(79:end).*1e6)])
     ylim([min(wt(79:end))-0.01 max(wt(79:end))+0.01])
@@ -168,17 +209,21 @@ if ~(round(max(lt)*1e6) == 1 || round(min(lt)*1e6) == 1) % If whole spectrum (fr
     %ylim([-inf inf])
     
     set(gcf, 'color', 'w');
-    subplot(2, 3, 5, 'align')
+    h_res = subplot(2, 3, 5, 'align');
+    pos = get(h_res, 'Position');
+    pos(2) = 0.3; % Reduce the spacing between the top and bottom plots.
+    set(h_res, 'Position', pos);
     plot(lt(79:end).*1e6,(wt(79:end)./wmi(79:end)-1).*100, 'r', 'LineWidth', 2)
     hold on
     plot(lt(79:end).*1e6, zeros(size(lt(79:end))), 'k', 'LineWidth', 1)
     xlabel('Wavelength, \lambda (\mum)')
-    ylabel('Residual (%)')
+    %ylabel('Residual (%)')
     xlim([min(lt(79:end).*1e6) max(lt(79:end).*1e6)])
     %xlim([min([min(lm.*1e6) min(lt.*1e6)]) max([max(lm.*1e6) max(lt.*1e6)])])
     if abs(100.*(wt(79:end)./wmi(79:end)-1)) < 5
         ylim([-5 5])
     end
+    pbaspect([1 0.25 1]); % Make the y-axis shorter.
 else
 
 if round(max(lt)*1e6) == 1 || round(min(lt)*1e6) == 1 % If S data or L data only
@@ -216,6 +261,6 @@ if round(max(lt)*1e6) == 1 || round(min(lt)*1e6) == 1 % If S data or L data only
 else
     set(hFig, 'Position', [100 100 500 1000])
 end
-set(hFig, 'Visible', 'off'); % Prevent MATLAB from opening the figure in a new window.
+set(hFig, 'Visible', 'on'); % Prevent MATLAB from opening the figure in a new window.
 
 end

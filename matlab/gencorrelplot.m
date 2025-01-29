@@ -1,3 +1,4 @@
+% Edits by (tc): Prevent MATLAB from opening the figure in a new window.
 function gencorrelplot(MODS,bestmod,D)
 
 set(0,'DefaultAxesFontSize',10)
@@ -88,5 +89,7 @@ for i = 1:N
         end
     end
 end
+
+set(gcf, 'Visible', 'off'); % Prevent MATLAB from opening the figure in a new window.
 
 breakpoint = 1;

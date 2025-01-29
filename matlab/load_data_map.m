@@ -1,6 +1,6 @@
-% Used by mcmc.m: Nm = 4000 and Nsteps = 20.
+% Used by mcmc_map.m: Nm = 2000 and Nsteps = 10.
 % Todo: Allow the user to specify these values in the run file instead.
-function D = load_data(data, mixed_spectrum)
+function D = load_data_map(data, mixed_spectrum)
 
 [data_rows, ~] = size(data);
 cells = cell(data_rows, 5);
@@ -50,8 +50,8 @@ for i = 1:N
 end
 
 % MCMC PARAMETERS
-Nm = 4000;      % *** Length of each Markov chain;
-Nsteps = 20;   % *** Number of samples per cooling step
+Nm = 2000;      % *** Length of each Markov chain;
+Nsteps = 10;   % *** Number of samples per cooling step
 prior_size_low = zeros(1, cell_rows);
 prior_size_high = zeros(1, cell_rows);
 for i = 1:cell_rows

@@ -1,4 +1,4 @@
-function [theta,LLK,nAccept,nReject]=run_metro_dirichlet(count,theta,LLK,Nsteps,Sm,beta,D,C,IOparallel)
+function [theta,LLK,nAccept,nReject]=catmip_run_metro_dirichlet(count,theta,LLK,Nsteps,Sm,beta,D,C,IOparallel)
 % [theta,LLK,nAccept,nReject]=run_metro_dirichlet(count,theta,LLK,Nsteps,Sm,beta,D,C,IOparallel)
 % Run Metropolis sampler
 % Edited so that second half of theta vector is explored using Dirichlet

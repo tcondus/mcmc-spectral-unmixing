@@ -1,5 +1,7 @@
 function [Vllk,error_code]=catmip_llk_post(y,beta,data,C)
 % [llk,error_code]=catmip_llk_post(y,beta,D,C)
+% 2022-09-13 (tc): Fixed a problem where the "BAD FORWARD MODEL" wasn't
+%                  printing (printf was used instead of fprintf).
 %
 % Sarah Minson, April 14, 2014
 % Please cite:
@@ -24,7 +26,7 @@ function [Vllk,error_code]=catmip_llk_post(y,beta,data,C)
 
   LLK = C.for_model(y,data, LLK_prior);
   if length(LLK)>1; LLK_prior=LLK(2); LLK=LLK(1); end
-  if ~isfinite(LLK); printf('BAD FORWARD MODEL:\n'); disp(y);
+  if ~isfinite(LLK); fprintf('BAD FORWARD MODEL:\n'); disp(y);
     error_code = -2; return; end
 
   %//----------------- POSTERIOR P(m|D) -----------------------
